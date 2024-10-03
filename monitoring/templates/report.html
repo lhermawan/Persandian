@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Website Status Checker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Website Status Checker</h1>
+    <form id="websites-form">
+        <label for="websites">Enter websites (space-separated):</label><br>
+        <textarea id="websites" name="websites" rows="4" cols="50"></textarea><br>
+        <input type="submit" value="Check Status">
+    </form>
+
+    <h2>Website Status</h2>
+    <table id="status-table" border="1">
+        <tr>
+            <th>URL</th>
+            <th>Status</th>
+            <th>IP Address</th>
+            <th>SSL Status</th>
+            <th>SSL Expiry Date</th>
+            <th>Response Time</th>
+            <th>Checked At</th>
+        </tr>
+    </table>
+
+    <button id="export-btn">Export to Excel</button>
+
+    <script>
+        $(document).ready(function(){
+            $('#websites-form').on('submit', function(event){
+                event.preventDefault();
+                checkWebsites();
+            });
+
+            function checkWebsites() {
+                var websites = $('#websites').val();
+                $.ajax({
+                    url: '/check',
+                    method: 'POST',
+                    data: { websites: websites },
+                    success: function(response) {
+                        updateTable(response);
+                    }
+                });
+            }
+
+            function updateTable(data) {
+                $('#status-table tr:not(:first)').remove();
+                data.forEach(function(website) {
+                    $('#status-table').append('<tr>' +
+                        '<td>' + website.url + '</td>' +
+                        '<td>' + website.status + '</td>' +
+                        '<td>' + website.ip_address + '</td>' +
+                        '<td>' + website.ssl_status + '</td>' +
+                        '<td>' + website.ssl_expiry_date + '</td>' +
+                        '<td>' + website.response_time + '</td>' +
+                        '<td>' + website.checked_at + '</td>' +
+                    '</tr>');
+                });
+            }
+
+            setInterval(checkWebsites, 60000);  // Check every 60 seconds
+
+            $('#export-btn').on('click', function() {
+                window.location.href = '/export';
+            });
+        });
+    </script>
+</body>
+</html>

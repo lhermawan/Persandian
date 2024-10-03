@@ -1,4 +1,7 @@
 <?php
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\backend\MonitoringController;
 
 /*
   |--------------------------------------------------------------------------
@@ -16,7 +19,7 @@ Route::get('/', function () {
 })->name('/');
 
 Auth::routes();
-
+// Route::get('/monitor/websites/status', [MonitoringController::class, 'index']);
 Route::group([
     'namespace' => '\App\Http\Controllers\Backend',
     'prefix' => 'backend',
@@ -25,6 +28,9 @@ Route::group([
 ], function () {
 
     Route::get('home', 'HomeController@index')->name('home');
+    Route::get('monitoring', 'MonitoringController@index')->name('monitoring');
+    Route::get('monitoring/latest', [MonitoringController::class, 'latest'])->name('monitoring.latest');
+
 
     /**
      * Change Password Modul Routes
@@ -189,6 +195,8 @@ Route::group([
         Route::get('setting', 'SettingController@index')->name('setting');
         Route::post('setting/edit', 'SettingController@edit')->name('settingedit');
     });
+
+
 
     Route::group(['as' => 'master.'], function () {
         Route::get('master/desa', 'MasterDesaController@index')->name('desalist');

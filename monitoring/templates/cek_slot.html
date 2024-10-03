@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Checker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Pengecekan Website</h1>
+    <form id="checkForm">
+        <textarea name="websites" rows="4" cols="50" placeholder="Masukkan URL situs, satu per baris..."></textarea>
+        <br>
+        <button type="submit">Cek Status</button>
+    </form>
+    <div id="statusResults"></div>
+    
+    <h2>Pencarian Google</h2>
+    <form id="searchForm">
+        <input type="text" name="query" placeholder="Masukkan query" />
+        <button type="submit">Cari</button>
+    </form>
+    <div id="searchResults"></div>
+
+    <script>
+        $('#checkForm').on('submit', function(event) {
+            event.preventDefault();
+            $.post('/check', $(this).serialize(), function(data) {
+                let results = '<h3>Hasil Pengecekan:</h3><ul>';
+                data.forEach(item => {
+                    results += `<li>${item.url}: ${item.status}, IP: ${item.ip_address}, SSL: ${item.ssl_status}, Expiry: ${item.ssl_expiry_date}, Response Time: ${item.response_time}</li>`;
+                });
+                results += '</ul>';
+                $('#statusResults').html(results);
+            });
+        });
+
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            $.post('/google_search', $(this).serialize(), function(data) {
+                let results = '<h3>Hasil Pencarian:</h3><ul>';
+                data.forEach(link => {
+                    results += `<li><a href="${link}" target="_blank">${link}</a></li>`;
+                });
+                results += '</ul>';
+                $('#searchResults').html(results);
+            });
+        });
+    </script>
+</body>
+</html>

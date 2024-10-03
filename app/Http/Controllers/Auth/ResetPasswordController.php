@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Hash;
 
 class ResetPasswordController extends Controller
 {
@@ -81,15 +82,13 @@ class ResetPasswordController extends Controller
      * @return void
      */
     protected function resetPassword($user, $password)
-    {
-        $user->password = $password;
+{
+    $user->password = Hash::make($password); // Hash the password
 
-        $user->setRememberToken(Str::random(60));
+    $user->setRememberToken(Str::random(60)); // Regenerate remember token
+    $user->save();
 
-        $user->save();
-
-        event(new PasswordReset($user));
-        
-    }
+    event(new PasswordReset($user));
+}
 
 }

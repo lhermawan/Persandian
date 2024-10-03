@@ -102,12 +102,13 @@ use AuthenticatesUsers;
      * @return \Illuminate\Http\Response
      */
     public function logout(Request $request)
-    {
-        $this->guard()->logout();
+{
+    $this->guard()->logout();
 
-        $request->session()->invalidate();
+    $request->session()->invalidate(); // Hapus sesi pengguna
+    $request->session()->regenerateToken(); // Regenerasi token sesi
 
-        return $this->loggedOut($request) ?: redirect('/login');
-    }
+    return $this->loggedOut($request) ?: redirect('/login');
+}
 
 }
