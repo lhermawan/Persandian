@@ -30,8 +30,16 @@ Route::group([
     Route::get('home', 'HomeController@index')->name('home');
     Route::get('monitoring', 'MonitoringController@index')->name('monitoring');
     Route::get('monitoring/latest', [MonitoringController::class, 'latest'])->name('monitoring.latest');
+    // Route::get('monitoring', [MonitoringController::class, 'index'])->name('backend.monitoring.index');
+    // Route::get('monitoring/check', [MonitoringController::class, 'checkWebsites'])->name('monitoring.check');
+    Route::get('monitoring/infected', [MonitoringController::class, 'checkInfectedWebsites'])->name('monitoring.infected');
+    Route::get('monitoring/export', [MonitoringController::class, 'exportReport'])->name('monitoring.export');
+    Route::get('monitoring/check-status', [MonitoringController::class, 'getJobStatus'])->name('monitoring.check-status');
+    Route::get('monitoring/check-slot', [MonitoringController::class, 'checkSlot'])->name('monitoring.check-slot');
 
-
+    Route::get('monitoring/check', [MonitoringController::class, 'checkWebsites'])->name('monitoring.check');
+Route::get('monitoring/status', [MonitoringController::class, 'getJobStatus'])->name('monitoring.getJobStatus');
+Route::get('monitoring/results', [MonitoringController::class, 'getResults'])->name('monitoring.getResults');
     /**
      * Change Password Modul Routes
      * route('backend.change-password.*')

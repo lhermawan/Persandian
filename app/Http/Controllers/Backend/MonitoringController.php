@@ -6,133 +6,74 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Website;
+use App\Models\WebsiteStatus;
+use Illuminate\Support\Facades\Log;
+use App\Services\GoogleSearchService;
 
 class MonitoringController extends Controller
 {
-    // Function to call the Flask API to check website status
+    protected $searchService;
+
+    public function __construct(GoogleSearchService $searchService)
+    {
+        $this->searchService = $searchService;
+    }
+    // Function to display the monitoring page without automatic checks
     public function index(Request $request)
     {
-        // Fetching websites from the database
-        $websites = Website::pluck('url')->implode(' '); // Combine URLs into a single string
-        $websites2 = []; // Make sure this is initialized properly
-
-        // Sending POST request to Flask API
-        $response = Http::timeout(60)->asForm()->post('http://localhost:5000/check', [
-            'websites' => $websites,
-        ]);
-
-        if ($response->failed()) {
-            return back()->withErrors(['api_error' => 'Failed to fetch website statuses.']);
-        }
-
-        $response2 = Http::asForm()->post('http://localhost:5000/search', [
-            'websites' => $websites2,
-        ]);
-
-        if ($response2->failed()) {
-            return back()->withErrors(['api_error' => 'Failed to fetch infected websites.']);
-        }
-
-        // Decode the JSON response
-        $results = $response->json();
-        $results2 = $response2->json();
-
-        // Initialize counter for "Up" status
-        $upCount = 0;
-
-        // Count the number of "Up" statuses
-        foreach ($results as $result) {
-            if ($result['status'] === 'Up') {
-                $upCount++;
-            }
-        }
-
-        // Calculate "Down" count
-        $downCount = count($results) - $upCount;
-
-        // Count the number of entries in results2
-        $results2Count = count($results2);
-
-        // Fetch websites with status = 1 from the database
-        $websitesWithStatus1 = Website::where('status', 1)->pluck('url')->toArray();
-
-        // Filter results3 to include only those where status is "Up" or from the database
-        $results3 = array_filter($results, function ($result) use ($websitesWithStatus1) {
-            return in_array($result['url'], $websitesWithStatus1); // Check if the URL is in the fetched list
-        });
-
-        // Return the view with results, counts, and results2 count
+        // Ambil semua hasil pengecekan dari database
+        $resultscount = WebsiteStatus::orderBy('status', 'asc')->get();
+        $results = WebsiteStatus::orderBy('status', 'asc')->paginate(10);
+        // Get websites with status = 1 and their corresponding WebsiteStatus
+    $results2 = Website::where('status', '1')
+    ->with('websiteStatus') // Assuming there's a relationship defined
+    ->get();
         return view('backend.monitoring.index', [
             'results' => $results,
-            'results3' => $results3, // Now includes only results where status = 1 from the database
-            'upCount' => $upCount,
-            'downCount' => $downCount, // Now represents all non-"Up" statuses
-            'results2' => $results2,
-            'results2Count' => $results2Count,  // Pass the count to the view
+            'upCount' => $resultscount->where('status', 'up')->count(),
+            'downCount' => $resultscount->where('status', '!=', 'up')->count(),
+            'results2' => $results2->where('status', '1'), // Ganti dengan data sesuai kebutuhan
+            'results3' => [], // Ganti dengan data sesuai kebutuhan
         ]);
     }
-    public function latest()
-    {
-        // Fetching websites from the database
-        $websites = Website::pluck('url')->implode(' '); // Combine URLs into a single string
-        $websites2 = []; // Make sure this is initialized properly
 
-        // Sending POST request to Flask API
-        $response = Http::timeout(60)->asForm()->post('http://localhost:5000/check', [
-            'websites' => $websites,
-        ]);
+    // Function to call the Flask API to check website status
+    public function checkWebsites(Request $request)
+{
+    // Dispatch the job to the queue
+    \App\Jobs\CheckWebsitesJob::dispatch();
 
-        $response2 = Http::asForm()->post('http://localhost:5000/search', [
-            'websites' => $websites2,
-        ]);
+    return response()->json(['message' => 'Website check started in background'], 200);
+}
+public function checkSlot()
+{
+    $site = '*.ciamiskab.go.id';
+    $text = 'slot';
 
-        // Decode the JSON response
-        $results = $response->json();
-        $results2 = $response2->json();
+    // Dapatkan daftar situs yang ditemukan dari service
+    $result = $this->searchService->checkSiteIntext($site, $text);
 
-        // Initialize counter for "Up" status
-        $upCount = 0;
+    return response()->json([
+        'found' => $result['found'],
+        'websites' => $result['websites'],
+        'websiteCount' => count($result['websites']) // Menghitung jumlah website
+    ]);
+}
 
-        // Count the number of "Up" statuses
-        foreach ($results as $result) {
-            if ($result['status'] === 'Up') {
-                $upCount++;
-            }
-        }
+public function getJobStatus()
+{
+    // Anda bisa menyimpan status job ke dalam cache atau database
+    // Sebagai contoh, jika status tersimpan di cache:
+    $status = cache('website_check_status', 'Not started');
 
-        // Calculate "Down" count
-        $downCount = count($results) - $upCount;
+    return response()->json(['status' => $status]);
+}
+public function getResults()
+{
+    // Ambil hasil dari cache
+    $results = cache('website_check_results', []);
 
-        // Count the number of entries in results2
-        $results2Count = count($results2);
+    return response()->json(['results' => $results]);
+}
 
-        // Fetch websites with status = 1 from the database
-        $websitesWithStatus1 = Website::where('status', 1)->pluck('url')->toArray();
-
-        // Filter results3 to include only those where status is "Up" or from the database
-        $results3 = array_filter($results, function ($result) use ($websitesWithStatus1) {
-            return in_array($result['url'], $websitesWithStatus1); // Check if the URL is in the fetched list
-        });
-
-        // Return JSON response
-        return response()->json([
-            'results' => $results,
-            'results3' => $results3,
-            'upCount' => $upCount,
-            'downCount' => $downCount,
-            'results2' => $results2,
-            'results2Count' => $results2Count,
-        ]);
-    }
-    // Function to call the Flask API to download the Excel file
-    public function exportReport()
-    {
-        // Sending GET request to Flask API
-        $response = Http::get('http://localhost:5000/export');
-
-        // Returning the exported file from Flask
-        return response($response->body(), 200)
-            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            ->header('Content-Disposition', 'attachment; filename="website_status_report.xlsx"');
-    }
 }

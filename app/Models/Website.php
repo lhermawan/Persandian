@@ -37,4 +37,9 @@ class Website extends Model
     protected $dates = [
         'created_at',
     ];
+
+    public function websiteStatus()
+    {
+        return $this->hasOne(WebsiteStatus::class, 'url', 'url'); // Assuming 'url' is the foreign key in WebsiteStatus
+    }
 }
