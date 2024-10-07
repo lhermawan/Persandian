@@ -87,7 +87,7 @@ class CheckWebsitesJob implements ShouldQueue
 
     Log::info('Website check job completed');
     Cache::put('website_check_status', 'completed');
-    event(new JobCompleted('Pengecekan website selesai.'));
+    cache(['website_check_status' => 'completed']);
 }
 
 }

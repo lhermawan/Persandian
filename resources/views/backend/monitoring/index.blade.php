@@ -77,6 +77,11 @@ label {
 </style>
 
 @section('content')
+@if($jobMessage)
+    <div class="alert alert-info">
+        {{ $jobMessage }}
+    </div>
+@endif
 <div id="loading" style="display: none;">
     <p>Scanning websites...</p>
     <div class="spinner-border text-primary" role="status">
@@ -89,9 +94,13 @@ label {
         <div class="ibox float-e-margins">
             <div class="ibox-title">
                 <h5>Monitoring Website</h5></br>
-                <h3 id="clock"></h3>
 
+                <h3 id="clock"></h3>
+                <div id="" style="display: block; position: fixed; top: 20px; right: 20px; background: #007bff; color: white; padding: 10px; border-radius: 5px;">
+
+                </div>
             </div>
+
             <script>
                 // Fungsi untuk mengupdate waktu secara live
                 function updateClock() {
@@ -129,6 +138,7 @@ label {
                 <!-- Separate buttons for checking websites -->
                 <button id="checkAllWebsitesBtn" class="btn btn-primary">Check All Websites</button>
                 <button id="check-slot-btn" class="btn btn-warning">Check Infected Websites</button>
+                <button id="check-status-btn" class="btn btn-warning">{{ $status_job }}</button>
             </div>
 
             <div class="row">
@@ -288,7 +298,7 @@ label {
         cluster: 'ap1',
         encrypted: true
     });
-    
+
     const channel = pusher.subscribe('job-status');
 
     channel.bind('App\\Events\\JobCompleted', function(data) {
@@ -430,6 +440,7 @@ label {
         });
     });
 </script>
+
 
             </div>
         </div>
