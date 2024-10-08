@@ -285,27 +285,7 @@
 
 
 <div id="status" class="loading-text">Loading status...</div>
-<div id="loader" class="loader" style="display: none;">
-    <div class="loading-text">
 
-    </div>
-    <div class="loading-bar-background">
-        <div class="loading-bar">
-            <div class="white-bars-container">
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-                <div class="white-bar"></div>
-            </div>
-        </div>
-    </div>
-</div>
 
             <div class="row">
                 <div class="col-sm-4">
@@ -379,10 +359,10 @@
                                                     <td class="wrap-text">{{ $result['url'] }}</td>
                                                     <td >
                                                         @if($result['status'] =='up')
-                                                        <img src="{{ URL::to('image/Green_circle.gif') }}" style="height:7%; width:7%">
+                                                        <img src="{{ URL::to('image/Green_circle.gif') }}" style="height:20px; width:20px">
                                                                             @endif
                                                         @if($result['status'] !='up')
-                                                        <img src="{{ URL::to('image/Red_circle.gif') }}" style="height:7%; width:7%">
+                                                        <img src="{{ URL::to('image/Red_circle.gif') }}" style="height:20px; width:20px">
                                                                             @endif
                                                                             {{ $result['status'] }}
                                                                         </td>
