@@ -199,7 +199,41 @@
                 <button id="checkAllWebsitesBtn" class="btn btn-primary">Check All Websites</button>
                 <button id="check-slot-btn" class="btn btn-warning">Check Infected Websites</button>
                 {{-- <button id="check-status-btn" class="btn btn-warning">{{ $status_job }}</button> --}}
+                <h1>Website Scan Progress</h1>
 
+                @php
+                    $totalWebsites = \App\Models\Website::count();
+                    $processedWebsites = Cache::get('processed_websites', 0);
+                @endphp
+
+                <div>
+                    <p id="progress-text">Processed Websites: {{ $processedWebsites }} / {{ $totalWebsites }}</p>
+                </div>
+
+                <div id="progress-bar" style="width: 100%; background: #f0f0f0; border: 1px solid #ccc; margin-top: 10px;">
+                    <div id="progress-fill" style="width: {{ ($processedWebsites / $totalWebsites) * 100 }}%; height: 30px; background: #4caf50;"></div>
+                </div>
+                <script>
+                    // Function to fetch the scan progress
+                    function fetchProgress() {
+                        $.get('{{ route("backend.scan_progress") }}', function(data) {
+                            const processed = data.processed;
+                            const total = data.total;
+
+                            // Update the progress text and bar
+                            $('#progress-text').text(`Processed Websites: ${processed} / ${total}`);
+                            $('#progress-fill').css('width', (processed / total) * 100 + '%');
+
+                            // Stop the interval if processing is complete
+                            if (processed >= total) {
+                                clearInterval(progressInterval);
+                            }
+                        });
+                    }
+
+                    // Set an interval to fetch progress every 2 seconds
+                    const progressInterval = setInterval(fetchProgress, 2000);
+                </script>
 
     {{-- <script src="{{ mix('js/app.js') }}"></script> --}}
     <script>

@@ -41,7 +41,17 @@ Route::group([
     Route::get('monitoring/check', [MonitoringController::class, 'checkWebsites'])->name('monitoring.check');
 Route::get('monitoring/status', [MonitoringController::class, 'getJobStatus'])->name('monitoring.getJobStatus');
 Route::get('monitoring/results', [MonitoringController::class, 'getResults'])->name('monitoring.getResults');
-    /**
+
+Route::get('/scan_progress', function () {
+    $totalWebsites = \App\Models\Website::count();
+    $processedWebsites = Cache::get('processed_websites', 0);
+
+    return response()->json([
+        'processed' => $processedWebsites,
+        'total' => $totalWebsites,
+    ]);
+})->name('scan_progress');
+/**
      * Change Password Modul Routes
      * route('backend.change-password.*')
      */

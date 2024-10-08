@@ -32,6 +32,25 @@ class MonitoringController extends Controller
 
     // Status job from cache
     $status_job = cache('website_check_status', 'Not started');
+// Ambil total website
+$totalWebsites = Website::count();
+
+// Definisikan chunk size dan timeout per chunk
+$chunkSize = 50; // Website per chunk
+$timeoutPerChunk = 600; // Detik (10 menit per chunk)
+
+// Hitung jumlah chunk
+$totalChunks = ceil($totalWebsites / $chunkSize);
+
+// Hitung estimasi waktu dalam detik
+$estimatedTimeInSeconds = $totalChunks * $timeoutPerChunk;
+
+// Konversi waktu menjadi jam, menit, detik
+$hours = floor($estimatedTimeInSeconds / 3600);
+$minutes = floor(($estimatedTimeInSeconds % 3600) / 60);
+$seconds = $estimatedTimeInSeconds % 60;
+
+
 
     // Cek apakah ini permintaan AJAX
     if ($request->ajax()) {
@@ -41,6 +60,10 @@ class MonitoringController extends Controller
             'upCount' => $resultscount->where('status', 'up')->count(),
             'downCount' => $resultscount->where('status', '!=', 'up')->count(),
             'results2' => $results2,
+            'hours' => $hours,
+            'minutes' => $minutes,
+            'seconds' => $seconds,
+
         ]);
     }
 
@@ -60,7 +83,10 @@ class MonitoringController extends Controller
         'downCount' => $resultscount->where('status', '!=', 'up')->count(),
         'results2' => $results2,
         'results3' => [], // Sesuaikan data
-        'jobMessage' => $jobMessage, // Pesan status pekerjaan
+        'jobMessage' => $jobMessage,
+        'hours' => $hours,
+        'minutes' => $minutes,
+        'seconds' => $seconds,// Pesan status pekerjaan
     ]);
 }
 
@@ -71,6 +97,13 @@ class MonitoringController extends Controller
     \App\Jobs\CheckWebsitesJob::dispatch();
 
     return response()->json(['message' => 'Website check started in background'], 200);
+}
+public function showCheckStatus()
+{
+
+
+    // Kirimkan estimasi waktu ke view
+    return view('status.check', compact('hours', 'minutes', 'seconds'));
 }
 public function checkSlot()
 {

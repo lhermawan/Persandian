@@ -26,73 +26,78 @@ class CheckWebsitesJob implements ShouldQueue
     }
 
     public function handle()
-    {
-        Cache::put('website_check_status', 'In progress');
-        Log::info('Broadcasting website check status', ['status' => 'In progress']);
-        broadcast(new WebsiteCheckStatusUpdated('In progress'));
+{
+    Cache::put('website_check_status', 'In progress');
+    Log::info('Broadcasting website check status', ['status' => 'In progress']);
 
-        $chunkedWebsites = Website::pluck('url')->chunk(50);
+    // Initialize processed websites count
+    Cache::put('processed_websites', 0);
 
-        foreach ($chunkedWebsites as $chunk) {
-            Log::info('Checking websites chunk', ['chunk' => $chunk]);
+    $chunkedWebsites = Website::pluck('url')->chunk(50);
 
-            try {
-                $response = Http::timeout(600)->asForm()->post('http://localhost:5000/check', [
-                    'websites' => $chunk->implode(' '),
-                ]);
+    foreach ($chunkedWebsites as $chunk) {
+        Log::info('Checking websites chunk', ['chunk' => $chunk]);
 
-                if ($response->failed()) {
-                    Log::error('Failed to connect to API', ['status' => $response->status()]);
-                    continue;
-                }
+        try {
+            $response = Http::timeout(600)->asForm()->post('http://localhost:5000/check', [
+                'websites' => $chunk->implode(' '),
+            ]);
 
-                Log::info('API Response', ['response' => $response->json()]);
-
-                $chunkResults = $response->json();
-
-                foreach ($chunkResults as $result) {
-                    Log::info('Saving website status', [
-                        'url' => $result['url'],
-                        'status' => strtolower($result['status']),
-                        'ip_address' => $result['ip_address'],
-                        'ssl_status' => $result['ssl_status'],
-                        'ssl_expiry_date' => $result['ssl_expiry_date'],
-                        'response_time' => $result['response_time'],
-                    ]);
-
-                    try {
-                        WebsiteStatus::updateOrCreate(
-                            ['url' => $result['url']],
-                            [
-                                'status' => strtolower($result['status']),
-                                'ip_address' => $result['ip_address'],
-                                'ssl_status' => $result['ssl_status'],
-                                'ssl_expiry_date' => $result['ssl_expiry_date'],
-                                'response_time' => $result['response_time'],
-                                'checked_at' => $result['checked_at'],
-                            ]
-                        );
-                        Log::info('Saved website status successfully', ['url' => $result['url']]);
-                    } catch (\Exception $e) {
-                        Log::error('Error saving website status', [
-                            'url' => $result['url'],
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-
-                broadcast(new WebsiteCheckStatusUpdated('In progress - chunk completed'));
-
-            } catch (\Exception $e) {
-                Log::error('Error during HTTP request', [
-                    'error' => $e->getMessage(),
-                ]);
+            if ($response->failed()) {
+                Log::error('Failed to connect to API', ['status' => $response->status()]);
+                continue;
             }
-        }
 
-        Log::info('Website check job completed');
-        Cache::put('website_check_status', 'completed');
-        Log::info('Broadcasting website check status', ['status' => 'completed']);
-        broadcast(new WebsiteCheckStatusUpdated('completed'));
+            Log::info('API Response', ['response' => $response->json()]);
+
+            $chunkResults = $response->json();
+
+            foreach ($chunkResults as $result) {
+                Log::info('Saving website status', [
+                    'url' => $result['url'],
+                    'status' => strtolower($result['status']),
+                    'ip_address' => $result['ip_address'],
+                    'ssl_status' => $result['ssl_status'],
+                    'ssl_expiry_date' => $result['ssl_expiry_date'],
+                    'response_time' => $result['response_time'],
+                ]);
+
+                try {
+                    WebsiteStatus::updateOrCreate(
+                        ['url' => $result['url']],
+                        [
+                            'status' => strtolower($result['status']),
+                            'ip_address' => $result['ip_address'],
+                            'ssl_status' => $result['ssl_status'],
+                            'ssl_expiry_date' => $result['ssl_expiry_date'],
+                            'response_time' => $result['response_time'],
+                            'checked_at' => $result['checked_at'],
+                        ]
+                    );
+
+                    // Increment processed websites count
+                    $processedWebsites = Cache::increment('processed_websites');
+                    Log::info('Saved website status successfully', [
+                        'url' => $result['url'],
+                        'processed' => $processedWebsites,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error saving website status', [
+                        'url' => $result['url'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error during HTTP request', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
+    Log::info('Website check job completed');
+    Cache::put('website_check_status', 'completed');
+    Log::info('Broadcasting website check status', ['status' => 'completed']);
+}
 }
