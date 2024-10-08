@@ -38,7 +38,7 @@
     <link href="{{ asset('plugin-inspinia/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('plugin-inspinia/css/plugins/iCheck/custom.css') }}" rel="stylesheet">
 
-
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
 
     @yield('onpage-css')
 
@@ -224,6 +224,9 @@
         });
 
     </script>
+    <script src="https://js.pusher.com/8.3/pusher.min.js"></script>
+    <script src="{{ mix('js/app.js') }}" defer></script> <!-- Pastikan file ini ada -->
+
 
 
     @yield('onpage-js')

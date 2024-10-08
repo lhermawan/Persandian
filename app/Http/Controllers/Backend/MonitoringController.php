@@ -9,7 +9,7 @@ use App\Models\Website;
 use App\Models\WebsiteStatus;
 use Illuminate\Support\Facades\Log;
 use App\Services\GoogleSearchService;
-
+use App\Services\MonitoringService;
 class MonitoringController extends Controller
 {
     protected $searchService;
@@ -102,5 +102,19 @@ public function getResults()
 
     return response()->json(['results' => $results]);
 }
-
+public function streamStatus()
+{
+    return response()->stream(function() {
+        while (true) {
+            echo "data: " . json_encode(MonitoringService::getStatus()) . "\n\n";
+            ob_flush();
+            flush();
+            sleep(5); // Ubah setiap 5 detik
+        }
+    }, 200, [
+        'Content-Type' => 'text/event-stream',
+        'Cache-Control' => 'no-cache',
+        'Connection' => 'keep-alive',
+    ]);
+}
 }

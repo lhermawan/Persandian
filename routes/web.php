@@ -2,7 +2,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\backend\MonitoringController;
-
+use Illuminate\Support\Facades\Cache;
+use App\Events\WebsiteCheckStatusUpdated;
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -48,7 +49,15 @@ Route::get('monitoring/results', [MonitoringController::class, 'getResults'])->n
         Route::get('change-password', 'ChangePasswordController@index')->name('index');
         Route::post('change-password/change', 'ChangePasswordController@change')->name('change');
     });
+    Route::get('monitoring/test-broadcast', function () {
+        // Fetch the latest job status from the cache
+        $status = Cache::get('website_check_status', 'Not Checked');
 
+        // Broadcast the status
+        broadcast(new WebsiteCheckStatusUpdated($status));
+
+        return response()->json(['status' => $status]);
+    });
     /**
      * Profile Modul Routes
      * route('backend.profile.*')

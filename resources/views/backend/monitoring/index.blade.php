@@ -16,72 +16,132 @@
         height: 3rem;
     }
     .loader {
-  width: 350px;
-  height: 180px;
-  border-radius: 10px;
-  background: #fff;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: space-evenly;
-  padding: 30px;
-  box-shadow: 2px 2px 10px -5px lightgrey;
-}
-.loading {
-  width: 100%;
-  height: 10px;
-  background: lightgrey;
-  border-radius: 10px;
-  position: relative;
-  overflow: hidden;
-}
-.loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 10px;
-  background: #002;
-  border-radius: 10px;
-  z-index: 1;
-  animation: loading 0.6s alternate infinite;
-}
-label {
-  color: #002;
-  font-size: 18px;
-  animation: bit 0.6s alternate infinite;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
 }
 
-@keyframes bit {
-  from {
-    opacity: 0.3;
-  }
-  to {
-    opacity: 1;
-  }
+.loading-text {
+  color: white;
+  font-size: 14pt;
+  font-weight: 600;
+  margin-left: 0px;
+}
+
+.dot {
+  margin-left: 3px;
+  animation: blink 1.5s infinite;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.loading-bar-background {
+  --height: 30px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 5px;
+  width: 100%;
+  height: var(--height);
+  background-color: #212121 /*change this*/;
+  box-shadow: #0c0c0c -2px 2px 4px 0px inset;
+  border-radius: calc(var(--height) / 2);
+}
+
+.loading-bar {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  --height: 20px;
+  width: 100%;
+  height: var(--height);
+  overflow: hidden;
+  background: rgb(222, 74, 15);
+  background: linear-gradient(
+    0deg,
+    rgba(222, 74, 15, 1) 0%,
+    rgba(249, 199, 79, 1) 100%
+  );
+  border-radius: calc(var(--height) / 2);
+  animation: loading 4s ease-out infinite;
+}
+
+.white-bars-container {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.white-bar {
+  background: rgb(255, 255, 255);
+  background: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  width: 10px;
+  height: 45px;
+  opacity: 0.3;
+  rotate: 45deg;
 }
 
 @keyframes loading {
   0% {
-    left: -25%;
+    width: 0;
+  }
+  80% {
+    width: 100%;
   }
   100% {
-    left: 70%;
-  }
-  0% {
-    left: -25%;
+    width: 100%;
   }
 }
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+#status {
+            padding: 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .in-progress {
+            background-color: orange;
+        }
+        .completed {
+            background-color: green;
+        }
+        .not-started {
+            background-color: gray; /* Warna untuk status 'Not Started' */
+        }
+
 
 </style>
 
 @section('content')
-@if($jobMessage)
+{{-- @if($jobMessage)
     <div class="alert alert-info">
         {{ $jobMessage }}
     </div>
-@endif
+@endif --}}
 <div id="loading" style="display: none;">
     <p>Scanning websites...</p>
     <div class="spinner-border text-primary" role="status">
@@ -138,8 +198,80 @@ label {
                 <!-- Separate buttons for checking websites -->
                 <button id="checkAllWebsitesBtn" class="btn btn-primary">Check All Websites</button>
                 <button id="check-slot-btn" class="btn btn-warning">Check Infected Websites</button>
-                <button id="check-status-btn" class="btn btn-warning">{{ $status_job }}</button>
+                {{-- <button id="check-status-btn" class="btn btn-warning">{{ $status_job }}</button> --}}
+
+
+    {{-- <script src="{{ mix('js/app.js') }}"></script> --}}
+    <script>
+        let previousStatus = ''; // Variabel untuk melacak status sebelumnya
+
+        function fetchMonitoringStatus() {
+            fetch('{{ route("backend.monitoring.getJobStatus") }}')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  // Tampilkan data di konsol
+                    const statusDiv = document.getElementById('status');
+
+                    // Reset state
+                    statusDiv.classList.remove('in-progress', 'completed', 'not-started');
+
+                    // Tentukan pesan dan kelas berdasarkan status
+                    if (data.status_job === 'In progress') {
+                        // Gantikan dengan teks "Website Sedang Dalam Pengecekan" beserta animasi titik
+                        statusDiv.innerHTML = `
+                            Website Sedang Dalam Pengecekan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+                        `;
+                        statusDiv.classList.add('in-progress');
+                    } else if (data.status_job === 'completed') {
+                        statusDiv.innerText = 'Pengecekan Website Selesai';
+                        statusDiv.classList.add('completed');
+
+                        // Cek jika status berubah dari "In progress" ke "completed"
+                        if (previousStatus === 'In progress' && data.status_job === 'completed') {
+                            // Refresh halaman setelah 2 detik
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        }
+                    } else {
+                        statusDiv.innerText = 'Belum ada pengecekan';
+                        statusDiv.classList.add('not-started');
+                    }
+
+                    // Simpan status saat ini sebagai status sebelumnya untuk pengecekan berikutnya
+                    previousStatus = data.status_job;
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        }
+
+        // Jalankan setiap 5 detik
+        setInterval(fetchMonitoringStatus, 5000);
+    </script>
+
+
+
+<div id="status" class="loading-text">Loading status...</div>
+<div id="loader" class="loader" style="display: none;">
+    <div class="loading-text">
+
+    </div>
+    <div class="loading-bar-background">
+        <div class="loading-bar">
+            <div class="white-bars-container">
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
+                <div class="white-bar"></div>
             </div>
+        </div>
+    </div>
+</div>
 
             <div class="row">
                 <div class="col-sm-4">
@@ -290,29 +422,8 @@ label {
                 </div>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-                <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
-<script src="https://js.pusher.com/7.0/pusher-js.min.js"></script>
-<script>
-    // Inisialisasi Pusher
-    const pusher = new Pusher('7f292e545137046c29e1', {
-        cluster: 'ap1',
-        encrypted: true
-    });
 
-    const channel = pusher.subscribe('job-status');
 
-    channel.bind('App\\Events\\JobCompleted', function(data) {
-        // Tampilkan notifikasi pop-up
-        const notification = document.getElementById('notification');
-        notification.style.display = 'block';
-        notification.textContent = data.message;
-
-        // Sembunyikan notifikasi setelah beberapa detik
-        setTimeout(function() {
-            notification.style.display = 'none';
-        }, 5000);
-    });
-</script>
                 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
 
                 <script>
