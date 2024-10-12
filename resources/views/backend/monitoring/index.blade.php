@@ -439,7 +439,11 @@
 
 
                 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
-
+                <script>
+                    document.getElementById('checkAllWebsitesBtn').addEventListener('click', function() {
+                        window.location.reload(); // Melakukan refresh halaman
+                    });
+                </script>
                 <script>
                     let isChecking = true;
 
