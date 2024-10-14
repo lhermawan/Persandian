@@ -1,9 +1,11 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\backend\MonitoringController;
+use App\Http\Controllers\Backend\MonitoringController;
 use Illuminate\Support\Facades\Cache;
 use App\Events\WebsiteCheckStatusUpdated;
+use App\Http\Controllers\Backend\VulnerabilityScanController;
+
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -51,6 +53,9 @@ Route::get('/scan_progress', function () {
         'total' => $totalWebsites,
     ]);
 })->name('scan_progress');
+
+Route::get('/scan', [VulnerabilityScanController::class, 'showForm'])->name('scan.form');
+Route::post('/scan', [VulnerabilityScanController::class, 'scanWebsite']);
 /**
      * Change Password Modul Routes
      * route('backend.change-password.*')
