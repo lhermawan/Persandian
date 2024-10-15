@@ -464,41 +464,69 @@
                         });
                     }
 
-                    let isChecking = false; // Ganti dengan status Anda
+                    function fetchJobStatus() {
+                        $.ajax({
+                            url: '{{ route("backend.monitoring.getJobStatus") }}',
+                            method: 'GET',
+                            success: function(data) {
+                                if (data.status === 'completed') {
+                                    isChecking = false;
+                                    fetchResults();
+                                }
+                            },
+                            error: function() {
+                                console.error('Error fetching job status.');
+                            }
+                        });
+                    }
 
-function fetchJobStatus() {
-    $.ajax({
-        url: '{{ route("backend.monitoring.getJobStatus") }}',
-        method: 'GET',
-        success: function(data) {
-            if (data.status === 'In progress') {
-                isChecking = true;
-                $('#checkAllWebsitesBtn').prop('disabled', true); // Nonaktifkan tombol
-            } else if (data.status === 'completed') {
-                isChecking = false;
-                $('#checkAllWebsitesBtn').prop('disabled', false); // Aktifkan tombol
-                fetchResults(); // Ambil hasil jika sudah selesai
-            }
-        },
-        error: function() {
-            console.error('Error fetching job status.');
-        }
-    });
-}
+                    // function fetchResults() {
+                    //     $.ajax({
+                    //         url: '{{ route("backend.monitoring.getResults") }}', // Tambahkan route untuk ambil hasil
+                    //         method: 'GET',
+                    //         success: function(data) {
+                    //             // Render results di tabel
+                    //             $('#resultsTable tbody').empty();
+                    //             if (data.results.length > 0) {
+                    //                 data.results.forEach(function(result) {
+                    //                     $('#resultsTable tbody').append(`
+                    //                         <tr>
+                    //                             <td class="wrap-text">${result.url}</td>
+                    //                             <td>${result.status}</td>
+                    //                             <td>${result.ip_address}</td>
+                    //                             <td>${result.ssl_status}</td>
+                    //                             <td>${result.ssl_expiry_date}</td>
+                    //                             <td>${result.checked_at}</td>
+                    //                         </tr>
+                    //                     `);
+                    //                 });
+                    //             } else {
+                    //                 $('#resultsTable tbody').append(`
+                    //                     <tr>
+                    //                         <td colspan="6" class="text-center">No results available.</td>
+                    //                     </tr>
+                    //                 `);
+                    //             }
+                    //         },
+                    //         error: function() {
+                    //             console.error('Error fetching results.');
+                    //         }
+                    //     });
+                    // }
 
-$(document).ready(function() {
-    $('#checkAllWebsitesBtn').click(function() {
-        fetchAllWebsites();
-    });
-});
+                    $(document).ready(function() {
+                        $('#checkAllWebsitesBtn').click(function() {
+                            fetchAllWebsites();
+                        });
+                    });
 
-// Polling untuk memeriksa status setiap 5 detik
-setInterval(function() {
-    if (isChecking) {
-        fetchJobStatus();
-    }
-}, 5000);
 
+                    // Polling untuk memeriksa status setiap 5 detik
+                    setInterval(function() {
+                        if (isChecking) {
+                            fetchJobStatus();
+                        }
+                    }, 5000);
                 </script>
 
 <script>
