@@ -471,7 +471,7 @@ function fetchJobStatus() {
         url: '{{ route("backend.monitoring.getJobStatus") }}',
         method: 'GET',
         success: function(data) {
-            if (data.status === 'in_progress') {
+            if (data.status === 'In progress') {
                 isChecking = true;
                 $('#checkAllWebsitesBtn').prop('disabled', true); // Nonaktifkan tombol
             } else if (data.status === 'completed') {
